@@ -165,6 +165,11 @@ public class UTF8StreamJsonParser
             inputBuffer, start, end, 0, bufferRecyclable);
     }
 
+    @Override
+    public TextBuffer _textBuffer() {
+        return (TextBuffer) super._textBuffer();
+    }
+
     /**
      * Constructor called when caller wants to provide input buffer directly
      * (or needs to, in case of bootstrapping having read some of contents)
@@ -333,7 +338,7 @@ public class UTF8StreamJsonParser
                 _tokenIncomplete = false;
                 return _finishAndReturnString(); // only strings can be incomplete
             }
-            return _textBuffer.contentsAsString();
+            return _textBuffer().contentsAsString();
         }
         return _getText2(_currToken);
     }
@@ -347,7 +352,7 @@ public class UTF8StreamJsonParser
                 _tokenIncomplete = false;
                 _finishString(); // only strings can be incomplete
             }
-            return _textBuffer.contentsToWriter(writer);
+            return _textBuffer().contentsToWriter(writer);
         }
         if (t == JsonToken.FIELD_NAME) {
             String n = _parsingContext.getCurrentName();
@@ -356,7 +361,7 @@ public class UTF8StreamJsonParser
         }
         if (t != null) {
             if (t.isNumeric()) {
-                return _textBuffer.contentsToWriter(writer);
+                return _textBuffer().contentsToWriter(writer);
             }
             char[] ch = t.asCharArray();
             writer.write(ch);
@@ -376,7 +381,7 @@ public class UTF8StreamJsonParser
                 _tokenIncomplete = false;
                 return _finishAndReturnString(); // only strings can be incomplete
             }
-            return _textBuffer.contentsAsString();
+            return _textBuffer().contentsAsString();
         }
         if (_currToken == JsonToken.FIELD_NAME) {
             return getCurrentName();
@@ -393,7 +398,7 @@ public class UTF8StreamJsonParser
                 _tokenIncomplete = false;
                 return _finishAndReturnString(); // only strings can be incomplete
             }
-            return _textBuffer.contentsAsString();
+            return _textBuffer().contentsAsString();
         }
         if (_currToken == JsonToken.FIELD_NAME) {
             return getCurrentName();
@@ -454,7 +459,7 @@ public class UTF8StreamJsonParser
             // fall through
         case ID_NUMBER_INT:
         case ID_NUMBER_FLOAT:
-            return _textBuffer.contentsAsString();
+            return _textBuffer().contentsAsString();
         default:
         	return t.asString();
         }
@@ -488,7 +493,7 @@ public class UTF8StreamJsonParser
                 // fall through
             case ID_NUMBER_INT:
             case ID_NUMBER_FLOAT:
-                return _textBuffer.getTextBuffer();
+                return _textBuffer().getTextBuffer();
 
             default:
                 return _currToken.asCharArray();
@@ -513,7 +518,7 @@ public class UTF8StreamJsonParser
                 // fall through
             case ID_NUMBER_INT:
             case ID_NUMBER_FLOAT:
-                return _textBuffer.size();
+                return _textBuffer().size();
 
             default:
                 return _currToken.asCharArray().length;
@@ -538,7 +543,7 @@ public class UTF8StreamJsonParser
                 // fall through
             case ID_NUMBER_INT:
             case ID_NUMBER_FLOAT:
-                return _textBuffer.getTextOffset();
+                return _textBuffer().getTextOffset();
             default:
             }
         }
@@ -1331,7 +1336,7 @@ public class UTF8StreamJsonParser
                     _tokenIncomplete = false;
                     return _finishAndReturnString();
                 }
-                return _textBuffer.contentsAsString();
+                return _textBuffer().contentsAsString();
             }
             if (t == JsonToken.START_ARRAY) {
                 _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
@@ -1442,7 +1447,7 @@ public class UTF8StreamJsonParser
         if (!isEnabled(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS.mappedFeature())) {
             return _handleUnexpectedValue(INT_PERIOD);
         }
-        final char[] outBuf = _textBuffer.emptyAndGetCurrentSegment();
+        final char[] outBuf = _textBuffer().emptyAndGetCurrentSegment();
         int outPtr = 0;
         // 27-Jun-2022, tatu: [core#784] would add plus here too but not yet
         if (neg) {
@@ -1476,7 +1481,7 @@ public class UTF8StreamJsonParser
      */
     protected JsonToken _parseUnsignedNumber(int c) throws IOException
     {
-        char[] outBuf = _textBuffer.emptyAndGetCurrentSegment();
+        char[] outBuf = _textBuffer().emptyAndGetCurrentSegment();
         // One special case: if first char is 0, must not be followed by a digit
         if (c == INT_0) {
             c = _verifyNoLeadingZeroes();
@@ -1504,7 +1509,7 @@ public class UTF8StreamJsonParser
             return _parseFloat(outBuf, outPtr, c, false, intLen);
         }
         --_inputPtr; // to push back trailing char (comma etc)
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
         // As per #105, need separating space between root values; check here
         if (_parsingContext.inRoot()) {
             _verifyRootSpace(c);
@@ -1515,7 +1520,7 @@ public class UTF8StreamJsonParser
 
     private final JsonToken _parseSignedNumber(boolean negative) throws IOException
     {
-        char[] outBuf = _textBuffer.emptyAndGetCurrentSegment();
+        char[] outBuf = _textBuffer().emptyAndGetCurrentSegment();
         int outPtr = 0;
 
         if (negative) {
@@ -1566,7 +1571,7 @@ public class UTF8StreamJsonParser
         }
 
         --_inputPtr; // to push back trailing char (comma etc)
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
         // As per #105, need separating space between root values; check here
         if (_parsingContext.inRoot()) {
             _verifyRootSpace(c);
@@ -1584,7 +1589,7 @@ public class UTF8StreamJsonParser
         // Ok, parse the rest
         while (true) {
             if (_inputPtr >= _inputEnd && !_loadMore()) {
-                _textBuffer.setCurrentLength(outPtr);
+                _textBuffer().setCurrentLength(outPtr);
                 return resetInt(negative, intPartLength);
             }
             int c = (int) _inputBuffer[_inputPtr++] & 0xFF;
@@ -1595,14 +1600,14 @@ public class UTF8StreamJsonParser
                 break;
             }
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             outBuf[outPtr++] = (char) c;
             ++intPartLength;
         }
         --_inputPtr; // to push back trailing char (comma etc)
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
         // As per #105, need separating space between root values; check here
         if (_parsingContext.inRoot()) {
             _verifyRootSpace(_inputBuffer[_inputPtr] & 0xFF);
@@ -1656,7 +1661,7 @@ public class UTF8StreamJsonParser
         // And then see if we get other parts
         if (c == INT_PERIOD) { // yes, fraction
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             outBuf[outPtr++] = (char) c;
@@ -1673,7 +1678,7 @@ public class UTF8StreamJsonParser
                 }
                 ++fractLen;
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 outBuf[outPtr++] = (char) c;
@@ -1689,7 +1694,7 @@ public class UTF8StreamJsonParser
         int expLen = 0;
         if (c == INT_e || c == INT_E) { // exponent?
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             outBuf[outPtr++] = (char) c;
@@ -1701,7 +1706,7 @@ public class UTF8StreamJsonParser
             // Sign indicator?
             if (c == '-' || c == '+') {
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 outBuf[outPtr++] = (char) c;
@@ -1716,7 +1721,7 @@ public class UTF8StreamJsonParser
             while (c >= INT_0 && c <= INT_9) {
                 ++expLen;
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 outBuf[outPtr++] = (char) c;
@@ -1740,7 +1745,7 @@ public class UTF8StreamJsonParser
                 _verifyRootSpace(c);
             }
         }
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
 
         // And there we have it!
         return resetFloat(negative, integerPartLength, fractLen, expLen);
@@ -2393,7 +2398,7 @@ public class UTF8StreamJsonParser
         }
 
         // Need some working space, TextBuffer works well:
-        char[] cbuf = _textBuffer.emptyAndGetCurrentSegment();
+        char[] cbuf = _textBuffer().emptyAndGetCurrentSegment();
         int cix = 0;
 
         for (int ix = 0; ix < byteLen; ) {
@@ -2455,14 +2460,14 @@ public class UTF8StreamJsonParser
                 if (needed > 2) { // surrogate pair? once again, let's output one here, one later on
                     ch -= 0x10000; // to normalize it starting with 0x0
                     if (cix >= cbuf.length) {
-                        cbuf = _textBuffer.expandCurrentSegment();
+                        cbuf = _textBuffer().expandCurrentSegment();
                     }
                     cbuf[cix++] = (char) (0xD800 + (ch >> 10));
                     ch = 0xDC00 | (ch & 0x03FF);
                 }
             }
             if (cix >= cbuf.length) {
-                cbuf = _textBuffer.expandCurrentSegment();
+                cbuf = _textBuffer().expandCurrentSegment();
             }
             cbuf[cix++] = (char) ch;
         }
@@ -2501,7 +2506,7 @@ public class UTF8StreamJsonParser
             ptr = _inputPtr;
         }
         int outPtr = 0;
-        char[] outBuf = _textBuffer.emptyAndGetCurrentSegment();
+        char[] outBuf = _textBuffer().emptyAndGetCurrentSegment();
         final int[] codes = _icUTF8;
 
         final int max = Math.min(_inputEnd, (ptr + outBuf.length));
@@ -2511,7 +2516,7 @@ public class UTF8StreamJsonParser
             if (codes[c] != 0) {
                 if (c == INT_QUOTE) {
                     _inputPtr = ptr+1;
-                    _textBuffer.setCurrentLength(outPtr);
+                    _textBuffer().setCurrentLength(outPtr);
                     return;
                 }
                 break;
@@ -2533,7 +2538,7 @@ public class UTF8StreamJsonParser
             ptr = _inputPtr;
         }
         int outPtr = 0;
-        char[] outBuf = _textBuffer.emptyAndGetCurrentSegment();
+        char[] outBuf = _textBuffer().emptyAndGetCurrentSegment();
         final int[] codes = _icUTF8;
 
         final int max = Math.min(_inputEnd, (ptr + outBuf.length));
@@ -2543,7 +2548,7 @@ public class UTF8StreamJsonParser
             if (codes[c] != 0) {
                 if (c == INT_QUOTE) {
                     _inputPtr = ptr+1;
-                    return _textBuffer.setCurrentAndReturn(outPtr);
+                    return _textBuffer().setCurrentAndReturn(outPtr);
                 }
                 break;
             }
@@ -2552,7 +2557,7 @@ public class UTF8StreamJsonParser
         }
         _inputPtr = ptr;
         _finishString2(outBuf, outPtr);
-        return _textBuffer.contentsAsString();
+        return _textBuffer().contentsAsString();
     }
 
     private final void _finishString2(char[] outBuf, int outPtr)
@@ -2575,7 +2580,7 @@ public class UTF8StreamJsonParser
                     ptr = _inputPtr;
                 }
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 final int max = Math.min(_inputEnd, (ptr + (outBuf.length - outPtr)));
@@ -2613,7 +2618,7 @@ public class UTF8StreamJsonParser
                 // Let's add first part right away:
                 outBuf[outPtr++] = (char) (0xD800 | (c >> 10));
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 c = 0xDC00 | (c & 0x3FF);
@@ -2630,13 +2635,13 @@ public class UTF8StreamJsonParser
             }
             // Need more room?
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             // Ok, let's add char to output:
             outBuf[outPtr++] = (char) c;
         }
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
     }
 
     /**
@@ -2790,7 +2795,7 @@ public class UTF8StreamJsonParser
         int c = 0;
         // Otherwise almost verbatim copy of _finishString()
         int outPtr = 0;
-        char[] outBuf = _textBuffer.emptyAndGetCurrentSegment();
+        char[] outBuf = _textBuffer().emptyAndGetCurrentSegment();
 
         // Here we do want to do full decoding, hence:
         final int[] codes = _icUTF8;
@@ -2805,7 +2810,7 @@ public class UTF8StreamJsonParser
                     _loadMoreGuaranteed();
                 }
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 int max = _inputEnd;
@@ -2849,7 +2854,7 @@ public class UTF8StreamJsonParser
                 // Let's add first part right away:
                 outBuf[outPtr++] = (char) (0xD800 | (c >> 10));
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 c = 0xDC00 | (c & 0x3FF);
@@ -2864,13 +2869,13 @@ public class UTF8StreamJsonParser
             }
             // Need more room?
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             // Ok, let's add char to output:
             outBuf[outPtr++] = (char) c;
         }
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
 
         return JsonToken.VALUE_STRING;
     }

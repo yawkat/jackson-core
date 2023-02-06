@@ -75,12 +75,16 @@ public class BufferRecycler
 
     private final static int[] BYTE_BUFFER_LENGTHS = new int[] { 8000, 8000, 2000, 2000 };
     private final static int[] CHAR_BUFFER_LENGTHS = new int[] { 4000, 4000, 200, 200 };
+    private final static int[] STRING_BUILDER_LENGTHS = new int[] { 4000, 4000, 200, 200 };
 
     // Note: changed from simple array in 2.10:
     protected final AtomicReferenceArray<byte[]> _byteBuffers;
 
     // Note: changed from simple array in 2.10:
     protected final AtomicReferenceArray<char[]> _charBuffers;
+
+    // Note: changed from simple array in 2.10:
+    protected final AtomicReferenceArray<StringBuilder> _stringBuilders;
 
     /*
     /**********************************************************
@@ -108,6 +112,7 @@ public class BufferRecycler
     protected BufferRecycler(int bbCount, int cbCount) {
         _byteBuffers = new AtomicReferenceArray<byte[]>(bbCount);
         _charBuffers = new AtomicReferenceArray<char[]>(cbCount);
+        _stringBuilders = new AtomicReferenceArray<StringBuilder>(cbCount); // todo
     }
 
     /*
@@ -169,6 +174,33 @@ public class BufferRecycler
 
     /*
     /**********************************************************
+    /* Public API, StringBuilders
+    /**********************************************************
+     */
+
+    public final StringBuilder allocStringBuilder(int ix) {
+        return allocStringBuilder(ix, 0);
+    }
+
+    public StringBuilder allocStringBuilder(int ix, int minSize) {
+        final int DEF_SIZE = charBufferLength(ix);
+        if (minSize < DEF_SIZE) {
+            minSize = DEF_SIZE;
+        }
+        StringBuilder buffer = _stringBuilders.getAndSet(ix, null);
+        if (buffer == null || buffer.capacity() < minSize) {
+            buffer = sballoc(minSize);
+        }
+        return buffer;
+    }
+
+    public void releaseStringBuilder(int ix, StringBuilder buffer) {
+        buffer.setLength(0);
+        _stringBuilders.set(ix, buffer);
+    }
+
+    /*
+    /**********************************************************
     /* Overridable helper methods
     /**********************************************************
      */
@@ -181,6 +213,10 @@ public class BufferRecycler
         return CHAR_BUFFER_LENGTHS[ix];
     }
 
+    protected int stringBuilderLength(int ix) {
+        return STRING_BUILDER_LENGTHS[ix];
+    }
+
     /*
     /**********************************************************
     /* Actual allocations separated for easier debugging/profiling
@@ -189,4 +225,5 @@ public class BufferRecycler
 
     protected byte[] balloc(int size) { return new byte[size]; }
     protected char[] calloc(int size) { return new char[size]; }
+    protected StringBuilder sballoc(int size) { return new StringBuilder(size); }
 }

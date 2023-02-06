@@ -180,6 +180,11 @@ public class ReaderBasedJsonParser
         _bufferRecyclable = true;
     }
 
+    @Override
+    public TextBuffer _textBuffer() {
+        return (TextBuffer) super._textBuffer();
+    }
+    
     /*
     /**********************************************************
     /* Base method defs, overrides
@@ -319,7 +324,7 @@ public class ReaderBasedJsonParser
                 _tokenIncomplete = false;
                 _finishString(); // only strings can be incomplete
             }
-            return _textBuffer.contentsAsString();
+            return _textBuffer().contentsAsString();
         }
         return _getText2(_currToken);
     }
@@ -333,7 +338,7 @@ public class ReaderBasedJsonParser
                 _tokenIncomplete = false;
                 _finishString(); // only strings can be incomplete
             }
-            return _textBuffer.contentsToWriter(writer);
+            return _textBuffer().contentsToWriter(writer);
         }
         if (t == JsonToken.FIELD_NAME) {
             String n = _parsingContext.getCurrentName();
@@ -342,7 +347,7 @@ public class ReaderBasedJsonParser
         }
         if (t != null) {
             if (t.isNumeric()) {
-                return _textBuffer.contentsToWriter(writer);
+                return _textBuffer().contentsToWriter(writer);
             }
             char[] ch = t.asCharArray();
             writer.write(ch);
@@ -362,7 +367,7 @@ public class ReaderBasedJsonParser
                 _tokenIncomplete = false;
                 _finishString(); // only strings can be incomplete
             }
-            return _textBuffer.contentsAsString();
+            return _textBuffer().contentsAsString();
         }
         if (_currToken == JsonToken.FIELD_NAME) {
             return getCurrentName();
@@ -378,7 +383,7 @@ public class ReaderBasedJsonParser
                 _tokenIncomplete = false;
                 _finishString(); // only strings can be incomplete
             }
-            return _textBuffer.contentsAsString();
+            return _textBuffer().contentsAsString();
         }
         if (_currToken == JsonToken.FIELD_NAME) {
             return getCurrentName();
@@ -398,7 +403,7 @@ public class ReaderBasedJsonParser
             // fall through
         case ID_NUMBER_INT:
         case ID_NUMBER_FLOAT:
-            return _textBuffer.contentsAsString();
+            return _textBuffer().contentsAsString();
         default:
             return t.asString();
         }
@@ -430,7 +435,7 @@ public class ReaderBasedJsonParser
                 // fall through
             case ID_NUMBER_INT:
             case ID_NUMBER_FLOAT:
-                return _textBuffer.getTextBuffer();
+                return _textBuffer().getTextBuffer();
             default:
                 return _currToken.asCharArray();
             }
@@ -453,7 +458,7 @@ public class ReaderBasedJsonParser
                 // fall through
             case ID_NUMBER_INT:
             case ID_NUMBER_FLOAT:
-                return _textBuffer.size();
+                return _textBuffer().size();
             default:
                 return _currToken.asCharArray().length;
             }
@@ -477,7 +482,7 @@ public class ReaderBasedJsonParser
                 // fall through
             case ID_NUMBER_INT:
             case ID_NUMBER_FLOAT:
-                return _textBuffer.getTextOffset();
+                return _textBuffer().getTextOffset();
             default:
             }
         }
@@ -1229,7 +1234,7 @@ public class ReaderBasedJsonParser
                     _tokenIncomplete = false;
                     _finishString();
                 }
-                return _textBuffer.contentsAsString();
+                return _textBuffer().contentsAsString();
             }
             if (t == JsonToken.START_ARRAY) {
                 _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
@@ -1422,7 +1427,7 @@ public class ReaderBasedJsonParser
             _verifyRootSpace(ch);
         }
         int len = ptr-startPtr;
-        _textBuffer.resetWithShared(_inputBuffer, startPtr, len);
+        _textBuffer().resetWithShared(_inputBuffer, startPtr, len);
         return resetInt(false, intLen);
     }
 
@@ -1487,7 +1492,7 @@ public class ReaderBasedJsonParser
             _verifyRootSpace(ch);
         }
         int len = ptr-startPtr;
-        _textBuffer.resetWithShared(_inputBuffer, startPtr, len);
+        _textBuffer().resetWithShared(_inputBuffer, startPtr, len);
         // And there we have it!
         return resetFloat(neg, intLen, fractLen, expLen);
     }
@@ -1541,7 +1546,7 @@ public class ReaderBasedJsonParser
             _verifyRootSpace(ch);
         }
         int len = ptr-startPtr;
-        _textBuffer.resetWithShared(_inputBuffer, startPtr, len);
+        _textBuffer().resetWithShared(_inputBuffer, startPtr, len);
         return resetInt(negative, intLen);
     }
 
@@ -1564,7 +1569,7 @@ public class ReaderBasedJsonParser
     private final JsonToken _parseNumber2(boolean neg, int startPtr) throws IOException
     {
         _inputPtr = neg ? (startPtr+1) : startPtr;
-        char[] outBuf = _textBuffer.emptyAndGetCurrentSegment();
+        char[] outBuf = _textBuffer().emptyAndGetCurrentSegment();
         int outPtr = 0;
 
         // Need to prepend sign?
@@ -1587,7 +1592,7 @@ public class ReaderBasedJsonParser
         while (c >= '0' && c <= '9') {
             ++intLen;
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             outBuf[outPtr++] = c;
@@ -1612,7 +1617,7 @@ public class ReaderBasedJsonParser
         if (c == '.') { // yes, fraction
             fractLen = 0;
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             outBuf[outPtr++] = c;
@@ -1629,7 +1634,7 @@ public class ReaderBasedJsonParser
                 }
                 ++fractLen;
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 outBuf[outPtr++] = c;
@@ -1646,7 +1651,7 @@ public class ReaderBasedJsonParser
         if (c == 'e' || c == 'E') { // exponent?
             expLen = 0;
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             outBuf[outPtr++] = c;
@@ -1656,7 +1661,7 @@ public class ReaderBasedJsonParser
             // Sign indicator?
             if (c == '-' || c == '+') {
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 outBuf[outPtr++] = c;
@@ -1669,7 +1674,7 @@ public class ReaderBasedJsonParser
             while (c <= INT_9 && c >= INT_0) {
                 ++expLen;
                 if (outPtr >= outBuf.length) {
-                    outBuf = _textBuffer.finishCurrentSegment();
+                    outBuf = _textBuffer().finishCurrentSegment();
                     outPtr = 0;
                 }
                 outBuf[outPtr++] = c;
@@ -1692,7 +1697,7 @@ public class ReaderBasedJsonParser
                 _verifyRootSpace(c);
             }
         }
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
 
         // And there we have it!
         // 26-Jun-2022, tatu: Careful here, as non-standard numbers can
@@ -1861,13 +1866,13 @@ public class ReaderBasedJsonParser
 
     private String _parseName2(int startPtr, int hash, int endChar) throws IOException
     {
-        _textBuffer.resetWithShared(_inputBuffer, startPtr, (_inputPtr - startPtr));
+        _textBuffer().resetWithShared(_inputBuffer, startPtr, (_inputPtr - startPtr));
 
         /* Output pointers; calls will also ensure that the buffer is
          * not shared and has room for at least one more char.
          */
-        char[] outBuf = _textBuffer.getCurrentSegment();
-        int outPtr = _textBuffer.getCurrentSegmentSize();
+        char[] outBuf = _textBuffer().getCurrentSegment();
+        int outPtr = _textBuffer().getCurrentSegmentSize();
 
         while (true) {
             if (_inputPtr >= _inputEnd) {
@@ -1899,13 +1904,13 @@ public class ReaderBasedJsonParser
 
             // Need more room?
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
         }
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
         {
-            TextBuffer tb = _textBuffer;
+            TextBuffer tb = _textBuffer();
             char[] buf = tb.getTextBuffer();
             int start = tb.getTextOffset();
             int len = tb.size();
@@ -2085,8 +2090,8 @@ public class ReaderBasedJsonParser
 
     protected JsonToken _handleApos() throws IOException
     {
-        char[] outBuf = _textBuffer.emptyAndGetCurrentSegment();
-        int outPtr = _textBuffer.getCurrentSegmentSize();
+        char[] outBuf = _textBuffer().emptyAndGetCurrentSegment();
+        int outPtr = _textBuffer().getCurrentSegmentSize();
 
         while (true) {
             if (_inputPtr >= _inputEnd) {
@@ -2114,21 +2119,21 @@ public class ReaderBasedJsonParser
             }
             // Need more room?
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             // Ok, let's add char to output:
             outBuf[outPtr++] = c;
         }
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
         return JsonToken.VALUE_STRING;
     }
 
     private String _handleOddName2(int startPtr, int hash, int[] codes) throws IOException
     {
-        _textBuffer.resetWithShared(_inputBuffer, startPtr, (_inputPtr - startPtr));
-        char[] outBuf = _textBuffer.getCurrentSegment();
-        int outPtr = _textBuffer.getCurrentSegmentSize();
+        _textBuffer().resetWithShared(_inputBuffer, startPtr, (_inputPtr - startPtr));
+        char[] outBuf = _textBuffer().getCurrentSegment();
+        int outPtr = _textBuffer().getCurrentSegmentSize();
         final int maxCode = codes.length;
 
         while (true) {
@@ -2153,13 +2158,13 @@ public class ReaderBasedJsonParser
 
             // Need more room?
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
         }
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
         {
-            TextBuffer tb = _textBuffer;
+            TextBuffer tb = _textBuffer();
             char[] buf = tb.getTextBuffer();
             int start = tb.getTextOffset();
             int len = tb.size();
@@ -2186,7 +2191,7 @@ public class ReaderBasedJsonParser
                 int ch = _inputBuffer[ptr];
                 if (ch < maxCode && codes[ch] != 0) {
                     if (ch == '"') {
-                        _textBuffer.resetWithShared(_inputBuffer, _inputPtr, (ptr-_inputPtr));
+                        _textBuffer().resetWithShared(_inputBuffer, _inputPtr, (ptr-_inputPtr));
                         _inputPtr = ptr+1;
                         // Yes, we got it all
                         return;
@@ -2198,15 +2203,15 @@ public class ReaderBasedJsonParser
         }
 
         // Either ran out of input, or bumped into an escape sequence...
-        _textBuffer.resetWithCopy(_inputBuffer, _inputPtr, (ptr-_inputPtr));
+        _textBuffer().resetWithCopy(_inputBuffer, _inputPtr, (ptr-_inputPtr));
         _inputPtr = ptr;
         _finishString2();
     }
 
     protected void _finishString2() throws IOException
     {
-        char[] outBuf = _textBuffer.getCurrentSegment();
-        int outPtr = _textBuffer.getCurrentSegmentSize();
+        char[] outBuf = _textBuffer().getCurrentSegment();
+        int outPtr = _textBuffer().getCurrentSegmentSize();
         final int[] codes = _icLatin1;
         final int maxCode = codes.length;
 
@@ -2234,13 +2239,13 @@ public class ReaderBasedJsonParser
             }
             // Need more room?
             if (outPtr >= outBuf.length) {
-                outBuf = _textBuffer.finishCurrentSegment();
+                outBuf = _textBuffer().finishCurrentSegment();
                 outPtr = 0;
             }
             // Ok, let's add char to output:
             outBuf[outPtr++] = c;
         }
-        _textBuffer.setCurrentLength(outPtr);
+        _textBuffer().setCurrentLength(outPtr);
     }
 
     /**

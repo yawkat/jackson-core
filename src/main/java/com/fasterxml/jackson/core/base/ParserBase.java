@@ -12,9 +12,11 @@ import com.fasterxml.jackson.core.io.NumberInput;
 import com.fasterxml.jackson.core.json.DupDetector;
 import com.fasterxml.jackson.core.json.JsonReadContext;
 import com.fasterxml.jackson.core.json.PackageVersion;
+import com.fasterxml.jackson.core.json.SBUTF8StreamJsonParser;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.core.util.JacksonFeatureSet;
 import com.fasterxml.jackson.core.util.TextBuffer;
+import com.fasterxml.jackson.core.util.TextBufferBase;
 
 /**
  * Intermediate base class used by all Jackson {@link JsonParser}
@@ -153,7 +155,7 @@ public abstract class ParserBase extends ParserMinimalBase
      * field names if necessary (name split across boundary,
      * contains escape sequence, or access needed to char array)
      */
-    protected final TextBuffer _textBuffer;
+    protected final TextBufferBase _textBuffer;
 
     /**
      * Temporary buffer that is needed if field name is accessed
@@ -256,10 +258,18 @@ public abstract class ParserBase extends ParserMinimalBase
         super(features);
         _ioContext = ctxt;
         _streamReadConstraints = ctxt.streamReadConstraints();
-        _textBuffer = ctxt.constructTextBuffer();
+        if (this instanceof SBUTF8StreamJsonParser) {
+            _textBuffer = ctxt.constructSBTextBuffer();
+        } else {
+            _textBuffer = ctxt.constructTextBuffer();
+        }
         DupDetector dups = Feature.STRICT_DUPLICATE_DETECTION.enabledIn(features)
                 ? DupDetector.rootDetector(this) : null;
         _parsingContext = JsonReadContext.createRootContext(dups);
+    }
+
+    public TextBufferBase _textBuffer() {
+        return _textBuffer;
     }
 
     @Override public Version version() { return PackageVersion.VERSION; }

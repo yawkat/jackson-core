@@ -9,6 +9,8 @@ import com.fasterxml.jackson.core.json.JsonReadContext;
 import com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.core.util.JacksonFeatureSet;
+import com.fasterxml.jackson.core.util.TextBuffer;
+import com.fasterxml.jackson.core.util.TextBufferBase;
 
 import static com.fasterxml.jackson.core.JsonTokenId.*;
 
@@ -262,6 +264,11 @@ public abstract class NonBlockingJsonParserBase
     }
 
     @Override
+    public TextBuffer _textBuffer() {
+        return (TextBuffer) super._textBuffer();
+    }
+
+    @Override
     public ObjectCodec getCodec() {
         return null;
     }
@@ -333,7 +340,7 @@ public abstract class NonBlockingJsonParserBase
     {
         if (_currToken == JsonToken.VALUE_STRING) {
             // yes; is or can be made available efficiently as char[]
-            return _textBuffer.hasTextAsCharacters();
+            return _textBuffer().hasTextAsCharacters();
         }
         if (_currToken == JsonToken.FIELD_NAME) {
             // not necessarily; possible but:
@@ -706,7 +713,7 @@ public abstract class NonBlockingJsonParserBase
         }
 
         // Need some working space, TextBuffer works well:
-        char[] cbuf = _textBuffer.emptyAndGetCurrentSegment();
+        char[] cbuf = _textBuffer().emptyAndGetCurrentSegment();
         int cix = 0;
 
         for (int ix = 0; ix < byteLen; ) {
@@ -768,14 +775,14 @@ public abstract class NonBlockingJsonParserBase
                 if (needed > 2) { // surrogate pair? once again, let's output one here, one later on
                     ch -= 0x10000; // to normalize it starting with 0x0
                     if (cix >= cbuf.length) {
-                        cbuf = _textBuffer.expandCurrentSegment();
+                        cbuf = _textBuffer().expandCurrentSegment();
                     }
                     cbuf[cix++] = (char) (0xD800 + (ch >> 10));
                     ch = 0xDC00 | (ch & 0x03FF);
                 }
             }
             if (cix >= cbuf.length) {
-                cbuf = _textBuffer.expandCurrentSegment();
+                cbuf = _textBuffer().expandCurrentSegment();
             }
             cbuf[cix++] = (char) ch;
         }
@@ -827,7 +834,7 @@ public abstract class NonBlockingJsonParserBase
 
     protected final JsonToken _valueCompleteInt(int value, String asText) throws IOException
     {
-        _textBuffer.resetWithString(asText);
+        _textBuffer().resetWithString(asText);
         _intLength = asText.length();
         _numTypesValid = NR_INT; // to force parsing
         _numberInt = value;
@@ -841,7 +848,7 @@ public abstract class NonBlockingJsonParserBase
     protected final JsonToken _valueNonStdNumberComplete(int type) throws IOException
     {
         String tokenStr = NON_STD_TOKENS[type];
-        _textBuffer.resetWithString(tokenStr);
+        _textBuffer().resetWithString(tokenStr);
         if (!isEnabled(Feature.ALLOW_NON_NUMERIC_NUMBERS)) {
             _reportError("Non-standard token '%s': enable `JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS` to allow",
                     tokenStr);
