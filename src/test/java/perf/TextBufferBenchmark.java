@@ -62,7 +62,11 @@ TextBufferBenchmark.parseBytes       ASCII   1000000  avgt    4  1659248.796 ± 
         if (parser.nextToken() != JsonToken.VALUE_STRING) {
             throw new AssertionError();
         }
-        return parser.getText();
+        String text = parser.getText();
+        if (!text.equals(input.string)) {
+            throw new AssertionError();
+        }
+        return text;
     }
 
     //@Benchmark
@@ -71,7 +75,11 @@ TextBufferBenchmark.parseBytes       ASCII   1000000  avgt    4  1659248.796 ± 
         if (parser.nextToken() != JsonToken.VALUE_STRING) {
             throw new AssertionError();
         }
-        return parser.getText();
+        String text = parser.getText();
+        if (!text.equals(input.string)) {
+            throw new AssertionError();
+        }
+        return text;
     }
 
     @State(Scope.Thread)
@@ -84,15 +92,19 @@ TextBufferBenchmark.parseBytes       ASCII   1000000  avgt    4  1659248.796 ± 
 
         byte[] json;
 
+        String string;
+
         @Setup
         public void init() throws IOException {
+            char[] chars = new char[length];
+            for (int i = 0; i < length; i++) {
+                chars[i] = alphabet.chars.charAt(ThreadLocalRandom.current().nextInt(alphabet.chars.length()));
+            }
+            string = new String(chars);
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try (JsonGenerator generator = JSON_FACTORY.createGenerator(baos)) {
-                char[] chars = new char[length];
-                for (int i = 0; i < length; i++) {
-                    chars[i] = alphabet.chars.charAt(ThreadLocalRandom.current().nextInt(alphabet.chars.length()));
-                }
-                generator.writeString(chars, 0, chars.length);
+                generator.writeString(string);
             }
             json = baos.toByteArray();
         }
