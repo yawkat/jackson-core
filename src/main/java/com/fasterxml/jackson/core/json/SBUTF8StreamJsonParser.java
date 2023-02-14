@@ -2594,7 +2594,7 @@ public class SBUTF8StreamJsonParser
                     c = (int) inputBuffer[endPtr++] & 0xFF;
                     if (codes[c] != 0) {
                         _inputPtr = endPtr;
-                        appendAscii(outBuf, inputBuffer, ptr, endPtr - ptr);
+                        appendAscii(outBuf, inputBuffer, ptr, endPtr - ptr - 1);
                         break ascii_loop;
                     }
                 }
